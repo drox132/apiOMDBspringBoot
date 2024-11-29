@@ -1,0 +1,52 @@
+<configuration>
+    <!-- Definir una propiedad para la ruta del archivo de logs -->
+    <property name="LOG_PATH" value="logs/app.log" />
+
+    <!-- Appender para consola -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Appender para archivo -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_PATH}</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Logger raíz que dirige logs a consola y archivo -->
+    <root level="info">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
+</configuration>
+<!--
+1. Usar Logback (por defecto en Spring Boot)
+Spring Boot utiliza Logback como sistema de logging predeterminado, lo que permite configurar la
+salida de logs en un archivo con solo agregar un archivo de configuración.
+
+Paso 1.1: Crear el archivo logback-spring.xml
+En el directorio src/main/resources, crea un archivo llamado logback-spring.xml con la siguiente configuración:
+Paso 1.2: Asegurarte de que la carpeta logs exista
+Logback no creará automáticamente la carpeta para el archivo de log. Asegúrate de crear la carpeta logs en
+la raíz del proyecto para evitar errores.
+
+Paso 1.3: Configurar propiedades personalizadas (opcional)
+Puedes configurar el nivel de logging y otras propiedades en el archivo application.properties o application.yml:
+
+En application.properties:
+
+properties
+Copiar código
+logging.level.root=info
+logging.file.name=logs/app.log
+
+logging:
+  level:
+    root: info
+  file:
+    name: logs/app.log
