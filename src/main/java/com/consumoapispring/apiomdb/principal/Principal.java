@@ -3,6 +3,7 @@ package com.consumoapispring.apiomdb.principal;
 import com.consumoapispring.apiomdb.dtos.DatosEpisodio;
 import com.consumoapispring.apiomdb.dtos.DatosSerie;
 import com.consumoapispring.apiomdb.dtos.DatosTemporadas;
+import com.consumoapispring.apiomdb.exception.ConsumoApiOMDBException;
 import com.consumoapispring.apiomdb.model.Episodio;
 import com.consumoapispring.apiomdb.service.ConsumoApi;
 import com.consumoapispring.apiomdb.service.ConvierteDatos;
@@ -26,13 +27,15 @@ public class Principal {
 
     public List<DatosTemporadas> obtenerDatosTemporadasDTO() {
 
-        logger.debug("obtenemos datos de las temporadas en forma de DTO");
+        logger.debug("se invoco el metodo --> obtenerDatosTemporadasDTO() ");
 
         //Se pide el nombre de la serie al usuario
         System.out.println("Por favor ingrese el nombre de la Serie");
         var nombreBusqueda = entrada.nextLine();
-        var json = consumoApi.obtenerDatos(URL_BASE+nombreBusqueda.replace(" ","+")+API_KEY);
-        logger.info("obtenemos json de la serie" +json);
+
+        var json = consumoApi.obtenerDatos(URL_BASE + nombreBusqueda.replace(" ", "+") + API_KEY);
+
+        logger.info("obtenemos json de la serie" + json);
         //se realiza la busqueda de la Serie en general
         DatosSerie datosSerie = convierteDatos.convertirDatos(json, DatosSerie.class);
         //System.out.println(datosSerie);
@@ -40,13 +43,22 @@ public class Principal {
 
         //se busca la informacion de todas las temporadas
         List<DatosTemporadas> temporadas = new ArrayList<>();
-        for (int i = 1; i <= datosSerie.totalTemporadas(); i++) {
-            json = consumoApi.obtenerDatos(URL_BASE+nombreBusqueda.replace(" ","+")+"&season="+i+API_KEY);
-            DatosTemporadas datosTemporadas = convierteDatos.convertirDatos(json, DatosTemporadas.class);
-            temporadas.add(datosTemporadas);
-            logger.info(" obtenemos informacion de la temporada " + i+ " "+ datosTemporadas);
+        try {
+            for (int i = 1; i <= datosSerie.totalTemporadas(); i++) {
+                json = consumoApi.obtenerDatos(URL_BASE + nombreBusqueda.replace(" ", "+") + "&season=" + i + API_KEY);
+                DatosTemporadas datosTemporadas = convierteDatos.convertirDatos(json, DatosTemporadas.class);
+                temporadas.add(datosTemporadas);
+                logger.info(" obtenemos informacion de la temporada " + i + " " + datosTemporadas);
+            }
+        } catch (NullPointerException e) {
+            logger.warn("ha ocurrido un error en la busqueda la serie , es posible que la serie no exista o que no tenga los " +
+                    "criterios necesarios para considerarse una serie --> "+ e.getMessage());
+            throw new ConsumoApiOMDBException("Es posible que el nombre de la serie no exista " +
+                    "o no tenga los parametros para considerarse una serie " + e.getMessage());
 
         }
+
+
         //Muestra informacion de las temporadas
 
 //        temporadas.forEach(e->{
@@ -57,9 +69,10 @@ public class Principal {
     }
 
     public List<DatosEpisodio> obtenerDatosEpisodioDTO() {
-
+        logger.info("se invoco el metodo obtenerDatosEpisodioDTO()");
        List<DatosTemporadas> temporadasDTO = obtenerDatosTemporadasDTO();
         //obteniendo las listas de episodias de todas las temporadas para poder trabajarlos
+        logger.info("obteniendo las listas de episodias de todas las temporadas para poder trabajarlos");
         return  temporadasDTO.stream()
                 .flatMap(t -> t.episodiosTemporada().stream())
                 .collect(Collectors.toList());
@@ -67,8 +80,10 @@ public class Principal {
     }
 
     public List<Episodio> obtenerListaObjetoEpisodio() {
+        logger.info("Se invoco el metodo --> obtenerListaObjetoEpisodio()");
         List<DatosTemporadas> datosTemporadasDTO = obtenerDatosTemporadasDTO();
         //mapeando los datos del Dto datos episodio a la clase Episodio
+        logger.info("mapeando los datos del Dto datos episodio a la clase Episodio");
         return datosTemporadasDTO.stream()
                 .flatMap(t -> t.episodiosTemporada().stream()
                         .map(e-> new Episodio(t.numeroTemporada(),e)))
@@ -78,7 +93,7 @@ public class Principal {
     }
 
     public List<Episodio> obtenerTop5EpisodiosMejorValorados() {
-
+        logger.info("Se invoco el metodo --> obtenerTop5EpisodiosMejorValorados()");
         //creando un top 5 episodios mejor valorados
         return obtenerListaObjetoEpisodio().stream()
                 //.filter(e -> !e.getValoracion().equals(0.0)) //esto ya no es necesario xq cuando creamos el objeto sustituimos esos valores por 0 asi no afectara la ordenacion
@@ -96,6 +111,7 @@ public class Principal {
     }
 
     public List<Episodio> filtrandoEpisodiosFechaLanzamiento() {
+        logger.info("se invoco el metodo --> filtrandoEpisodiosFechaLanzamiento() ");
         List<Episodio> listadoObjetoEpisodios = obtenerListaObjetoEpisodio();
         //Filtrando listadoObjetoEpisodios por fecha de lanzamiento
 
@@ -125,6 +141,7 @@ public class Principal {
         */
     }
     public List<Episodio> obtenerListaObjetoEpisodioPorFragmentoPalabra() {
+        logger.info("se invoco el metodo --> obtenerListaObjetoEpisodioPorFragmentoPalabra() ");
         List<Episodio> listaObjetoEpisodio = obtenerListaObjetoEpisodio();
         System.out.println("Por favor ingrese el nombre del capitulo que desea ver");
         var capituloBuscado = entrada.nextLine();
@@ -146,6 +163,7 @@ public class Principal {
 
     }
     public void evaluacionPorTemporada () {
+        logger.info("se invoco el metodo --> evaluacionPorTemporada() ");
         List<Episodio> episodios = obtenerListaObjetoEpisodio();
         Map<Integer, Double>  evaluacionPorTemporada = episodios.stream()
                 .filter(e -> e.getValoracion() > 0.0)
@@ -158,6 +176,7 @@ public class Principal {
     }
 
     public void obtenerEstadisticasTemporadas() {
+        logger.info("se invoco el metodo --> obtenerEstadisticasTemporadas() ");
         List<Episodio> episodios = obtenerListaObjetoEpisodio();
 
         DoubleSummaryStatistics estadisticas = episodios.stream()

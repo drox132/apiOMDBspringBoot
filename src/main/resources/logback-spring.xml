@@ -50,3 +50,4 @@ logging:
     root: info
   file:
     name: logs/app.log
+-->
